@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#fdf6f0">
+  <title>Casamento Francisca & Nelson♥ Desafios</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Animated Background -->
+    <div class="bg-decoration" id="bgDecoration"></div>
+
+    <!-- ===== HOME VIEW ===== -->
+    <div id="homeView" class="view">
+      <header class="hero">
+        <img src="assets/couple.jpg" alt="Os Noivos" class="hero-couple" onerror="this.style.display='none'">
+        <h1 class="hero-title">Casamento Francisca & Nelson</h1>
+        <p class="hero-subtitle">♡ Desafios de Fotos ♡</p>
+        <div class="hero-divider">
+          <span></span>
+          <i class="fas fa-heart"></i>
+          <span></span>
+        </div>
+        <p class="hero-intro">
+          Bem-vindos ao nosso dia especial! Participem nos desafios, tirem fotos e encham o nosso álbum de memórias inesquecíveis.
+        </p>
+      </header>
+
+      <div class="section-title">
+        <h2>Os Nossos Desafios</h2>
+        <p>Toca num desafio para participar</p>
+      </div>
+
+      <div class="challenges-list" id="challengesList">
+        <!-- Challenges injected by JS -->
+      </div>
+
+      <footer class="footer">
+        <div class="footer-rings">
+          <i class="fas fa-ring"></i> <i class="fas fa-ring" style="margin-left:-8px"></i>
+        </div>
+        <div class="footer-text">Obrigado por fazerem parte</div>
+        <div class="footer-date">♡ 2026 ♡</div>
+      </footer>
+    </div>
+
+    <!-- ===== CHALLENGE DETAIL VIEW ===== -->
+    <div id="challengeView" class="view hidden">
+      <a href="#/" class="back-btn">
+        <i class="fas fa-chevron-left"></i> Voltar
+      </a>
+
+      <div class="challenge-header" id="challengeHeader">
+        <!-- Injected by JS -->
+      </div>
+
+      <div class="detail-progress" id="detailProgress">
+        <!-- Injected by JS -->
+      </div>
+
+      <div class="upload-section">
+        <label class="upload-area" id="uploadArea">
+          <input type="file" id="fileInput" accept="image/*" capture="environment">
+          <span class="upload-icon"><i class="fas fa-camera-retro"></i></span>
+          <div class="upload-text">Tira uma foto ou escolhe da galeria</div>
+          <div class="upload-hint">A foto vai para o álbum deste desafio</div>
+        </label>
+        <div class="upload-status" id="uploadStatus"></div>
+      </div>
+
+      <div class="gallery-section" id="gallerySection">
+        <h3 class="gallery-title"><i class="fas fa-images"></i> Fotos do Desafio</h3>
+        <div class="gallery-grid" id="galleryGrid"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/home.js"></script>
+  <script src="js/challenge.js"></script>
+  <script>
+    // Simple hash router
+    function handleRoute() {
+      const hash = window.location.hash;
+      const homeView = document.getElementById('homeView');
+      const challengeView = document.getElementById('challengeView');
+
+      if (hash.startsWith('#/challenge/')) {
+        const id = hash.replace('#/challenge/', '');
+        homeView.classList.add('hidden');
+        challengeView.classList.remove('hidden');
+        challengeView.classList.add('fade-in');
+        loadChallenge(id);
+        window.scrollTo(0, 0);
+      } else {
+        challengeView.classList.add('hidden');
+        homeView.classList.remove('hidden');
+        homeView.classList.add('fade-in');
+        loadHome();
+        window.scrollTo(0, 0);
+      }
+    }
+
+    window.addEventListener('hashchange', handleRoute);
+    window.addEventListener('load', handleRoute);
+  </script>
+</body>
+</html>

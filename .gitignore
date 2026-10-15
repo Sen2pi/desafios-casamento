@@ -1,0 +1,4 @@
+.DS_Store
+WhatsApp Image *.jpeg
+*.log
+node_modules/
