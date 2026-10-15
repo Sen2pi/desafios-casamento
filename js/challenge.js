@@ -13,8 +13,14 @@ function showStatus(type, message) {
   if (type === 'loading') {
     status.innerHTML = '<span class="spinner"></span>' + message;
   } else {
-    status.textContent = message;
+    status.innerHTML = message;
   }
+}
+
+function clearStatus() {
+  const status = document.getElementById('uploadStatus');
+  status.className = 'upload-status';
+  status.textContent = '';
 }
 
 function compressImage(file, maxWidth, maxHeight, quality) {
@@ -56,16 +62,87 @@ async function uploadPhoto(challengeId, dataUrl) {
         const progress = getLocalProgress();
         progress[challengeId] = (progress[challengeId] || 0) + 1;
         saveLocalProgress(progress);
+        const gallery = getLocalGallery();
+        const photoId = 'demo_' + Date.now();
+        gallery[challengeId] = gallery[challengeId] || [];
+        gallery[challengeId].unshift({
+          id: photoId,
+          name: 'foto_' + Date.now() + '.jpg',
+          url: dataUrl,
+          thumbnail: dataUrl,
+          date: new Date().toISOString()
+        });
+        saveLocalGallery(gallery);
         resolve({ success: true, count: progress[challengeId] });
       }, 800);
     });
   }
-  const res = await fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ challengeId, image: dataUrl })
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ challengeId, image: dataUrl })
+    });
+    if (!res.ok) {
+      throw new Error('HTTP ' + res.status);
+    }
+    return await res.json();
+  } catch (err) {
+    return { success: false, error: err.toString() };
+  }
+}
+
+function getLocalGallery() {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY + '_gallery');
+    return data ? JSON.parse(data) : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveLocalGallery(gallery) {
+  try {
+    localStorage.setItem(STORAGE_KEY + '_gallery', JSON.stringify(gallery));
+  } catch (e) {}
+}
+
+async function fetchGallery(challengeId) {
+  if (!isConfigured()) {
+    const gallery = getLocalGallery();
+    return { challengeId, files: gallery[challengeId] || [] };
+  }
+  try {
+    const url = APPS_SCRIPT_URL + '?action=gallery&challengeId=' + encodeURIComponent(challengeId);
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.error('Erro a carregar galeria:', e);
+    return { challengeId, files: [] };
+  }
+}
+
+function renderGallery(files) {
+  const grid = document.getElementById('galleryGrid');
+  const section = document.getElementById('gallerySection');
+
+  if (!files || files.length === 0) {
+    grid.innerHTML = '<div class="gallery-empty">Ainda não há fotos neste desafio. Sê o primeiro a enviar! 📸</div>';
+    return;
+  }
+
+  section.style.display = 'block';
+  let html = '';
+  files.forEach(f => {
+    const thumb = f.thumbnail || f.url;
+    html += `
+      <a class="gallery-item" href="${f.url}" target="_blank" rel="noopener">
+        <img src="${thumb}" alt="${f.name}" loading="lazy" onerror="this.style.opacity='0.3'">
+      </a>
+    `;
   });
-  return res.json();
+  grid.innerHTML = html;
 }
 
 function updateDetailProgress(count, target) {
@@ -100,15 +177,28 @@ async function loadChallenge(id) {
     return;
   }
   renderChallenge(ch);
+  clearStatus();
+
+  const fileInput = document.getElementById('fileInput');
+  const galleryInput = document.getElementById('galleryInput');
+  const cameraBtn = document.getElementById('cameraBtn');
+  const galleryBtn = document.getElementById('galleryBtn');
+
+  fileInput.onchange = handleFileSelect;
+  galleryInput.onchange = handleFileSelect;
+
+  if (cameraBtn) cameraBtn.onclick = () => fileInput.click();
+  if (galleryBtn) galleryBtn.onclick = () => galleryInput.click();
+
+  const galleryGrid = document.getElementById('galleryGrid');
+  galleryGrid.innerHTML = '<div class="gallery-empty"><span class="spinner"></span> A carregar fotos...</div>';
 
   const progress = await fetchProgress();
   const count = progress[ch.id] || 0;
   updateDetailProgress(count, ch.target);
 
-  const fileInput = document.getElementById('fileInput');
-  fileInput.onchange = handleFileSelect;
-  const uploadArea = document.getElementById('uploadArea');
-  uploadArea.onclick = () => fileInput.click();
+  const gallery = await fetchGallery(ch.id);
+  renderGallery(gallery.files || []);
 
   if (count >= ch.target) {
     showCelebration();
@@ -124,22 +214,28 @@ async function handleFileSelect(e) {
 
   try {
     const dataUrl = await compressImage(file, 1280, 1280, 0.8);
-    showStatus('loading', 'A enviar para o álbum...');
+    showStatus('loading', 'A enviar para o álbum no Google Drive...');
     const result = await uploadPhoto(currentChallenge.id, dataUrl);
 
     if (result.success) {
       const newCount = result.count !== undefined ? result.count : (currentTargetCount(currentChallenge.id) + 1);
       updateDetailProgress(newCount, currentChallenge.target);
-      showStatus('success', '🎉 Foto enviada com sucesso! Obrigado!');
-      showToast('Foto enviada! ♥');
+      showStatus('success', '✅ Foto enviada com sucesso para o álbum! Obrigado! ♥');
+      showToast('Foto enviada com sucesso! ♥');
+
+      const gallery = await fetchGallery(currentChallenge.id);
+      renderGallery(gallery.files || []);
+
       if (newCount >= currentChallenge.target) {
         setTimeout(showCelebration, 500);
       }
     } else {
-      showStatus('error', 'Erro: ' + (result.error || 'Não foi possível enviar.'));
+      showStatus('error', '❌ Não foi possível enviar a foto: ' + (result.error || 'Erro desconhecido'));
+      showToast('Erro ao enviar a foto');
     }
   } catch (err) {
-    showStatus('error', 'Erro a processar a foto. Tenta novamente.');
+    showStatus('error', '❌ Erro a processar a foto. Tenta novamente.');
+    showToast('Erro ao processar a foto');
     console.error(err);
   }
 

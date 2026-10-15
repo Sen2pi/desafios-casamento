@@ -62,12 +62,18 @@
       </div>
 
       <div class="upload-section">
-        <label class="upload-area" id="uploadArea">
-          <input type="file" id="fileInput" accept="image/*" capture="environment">
-          <span class="upload-icon"><i class="fas fa-camera-retro"></i></span>
-          <div class="upload-text">Tira uma foto ou escolhe da galeria</div>
-          <div class="upload-hint">A foto vai para o álbum deste desafio</div>
-        </label>
+        <div class="upload-buttons">
+          <button class="upload-btn camera-btn" id="cameraBtn">
+            <i class="fas fa-camera"></i>
+            <span>Tirar Foto</span>
+          </button>
+          <button class="upload-btn gallery-btn" id="galleryBtn">
+            <i class="fas fa-images"></i>
+            <span>Da Galeria</span>
+          </button>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none">
+        <input type="file" id="galleryInput" accept="image/*" style="display:none">
         <div class="upload-status" id="uploadStatus"></div>
       </div>
 

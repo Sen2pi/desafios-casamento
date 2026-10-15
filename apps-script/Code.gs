@@ -10,15 +10,20 @@ function doGet(e) {
   var action = e.parameter.action;
   var result;
 
-  if (action === 'progress') {
-    result = getProgress();
-  } else {
-    result = { error: 'Acao desconhecida. Use ?action=progress' };
+  try {
+    if (action === 'progress') {
+      result = getProgress();
+    } else if (action === 'gallery') {
+      var challengeId = e.parameter.challengeId;
+      result = getGallery(challengeId);
+    } else {
+      result = { error: 'Acao desconhecida. Use ?action=progress ou ?action=gallery&challengeId=ID' };
+    }
+  } catch (err) {
+    result = { error: err.toString() };
   }
 
-  return ContentService
-    .createTextOutput(JSON.stringify(result))
-    .setMimeType(ContentService.MimeType.JSON);
+  return jsonResponse(result);
 }
 
 function doPost(e) {
@@ -28,11 +33,11 @@ function doPost(e) {
     var imageData = data.image;
 
     if (!challengeId || !imageData) {
-      return jsonResponse({ success: false, error: 'Parametros em falta' });
+      return jsonResponse({ success: false, error: 'Parametros em falta (challengeId, image)' });
     }
 
     if (CHALLENGE_IDS.indexOf(challengeId) === -1) {
-      return jsonResponse({ success: false, error: 'Desafio invalido' });
+      return jsonResponse({ success: false, error: 'Desafio invalido: ' + challengeId });
     }
 
     var parent = DriveApp.getFolderById(PARENT_FOLDER_ID);
@@ -51,11 +56,21 @@ function doPost(e) {
 
     var bytes = Utilities.base64Decode(base64);
     var blob = Utilities.newBlob(bytes, 'image/jpeg', 'foto_' + Date.now() + '.jpg');
-    folder.createFile(blob);
+    var file = folder.createFile(blob);
+
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
     var count = countFiles(folder);
 
-    return jsonResponse({ success: true, count: count });
+    return jsonResponse({
+      success: true,
+      count: count,
+      file: {
+        id: file.getId(),
+        name: file.getName(),
+        url: file.getUrl()
+      }
+    });
   } catch (err) {
     return jsonResponse({ success: false, error: err.toString() });
   }
@@ -76,6 +91,43 @@ function getProgress() {
   }
 
   return result;
+}
+
+function getGallery(challengeId) {
+  if (!challengeId || CHALLENGE_IDS.indexOf(challengeId) === -1) {
+    return { error: 'Desafio invalido' };
+  }
+
+  var parent = DriveApp.getFolderById(PARENT_FOLDER_ID);
+  var folders = parent.getFoldersByName(challengeId);
+  if (!folders.hasNext()) {
+    return { challengeId: challengeId, files: [] };
+  }
+
+  var folder = folders.next();
+  var files = folder.getFiles();
+  var list = [];
+
+  while (files.hasNext()) {
+    var file = files.next();
+    try {
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch (e) {}
+
+    list.push({
+      id: file.getId(),
+      name: file.getName(),
+      url: file.getUrl(),
+      thumbnail: 'https://lh3.googleusercontent.com/d/' + file.getId() + '=w400',
+      date: file.getDateCreated().toISOString()
+    });
+  }
+
+  list.sort(function(a, b) {
+    return new Date(b.date) - new Date(a.date);
+  });
+
+  return { challengeId: challengeId, files: list };
 }
 
 function countFiles(folder) {

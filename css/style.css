@@ -393,52 +393,57 @@ body {
   margin-bottom: 30px;
 }
 
-.upload-area {
-  border: 2px dashed var(--blush-dark);
-  border-radius: 20px;
-  padding: 35px 20px;
-  text-align: center;
-  background: var(--white);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
+.upload-buttons {
+  display: flex;
+  gap: 12px;
 }
 
-.upload-area:active {
+.upload-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 22px 10px;
+  border: 2px dashed var(--blush-dark);
+  border-radius: 18px;
+  background: var(--white);
+  color: var(--text-dark);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.upload-btn i {
+  font-size: 26px;
+  color: var(--rose);
+}
+
+.upload-btn:active {
+  transform: scale(0.96);
   border-color: var(--rose);
   background: var(--cream);
 }
 
-.upload-icon {
-  font-size: 40px;
-  margin-bottom: 10px;
-  display: block;
+.camera-btn i {
+  color: var(--gold);
 }
 
-.upload-text {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 17px;
-  color: var(--text-dark);
-  margin-bottom: 4px;
-}
-
-.upload-hint {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.upload-area input {
-  display: none;
+.gallery-btn i {
+  color: var(--rose);
 }
 
 /* ===== Upload Progress ===== */
 .upload-status {
   margin-top: 15px;
-  padding: 12px;
+  padding: 14px 16px;
   border-radius: 12px;
-  font-size: 13px;
+  font-size: 14px;
   text-align: center;
   display: none;
+  line-height: 1.4;
 }
 
 .upload-status.loading {
@@ -478,17 +483,36 @@ body {
   gap: 6px;
 }
 
+.gallery-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 30px 15px;
+  color: var(--text-muted);
+  font-size: 14px;
+  background: var(--cream);
+  border-radius: 12px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+}
+
 .gallery-item {
   aspect-ratio: 1;
   border-radius: 10px;
   overflow: hidden;
   background: var(--cream);
+  display: block;
+  text-decoration: none;
 }
 
 .gallery-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.gallery-item:active img {
+  transform: scale(0.95);
 }
 
 /* ===== Progress Section in Detail ===== */
