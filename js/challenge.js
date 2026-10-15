@@ -1,4 +1,6 @@
 let currentChallenge = null;
+let currentGalleryFiles = [];
+let lightboxIndex = 0;
 
 function showToast(msg) {
   const toast = document.getElementById('toast');
@@ -132,17 +134,25 @@ function renderGallery(files) {
     return;
   }
 
+  currentGalleryFiles = files;
   section.style.display = 'block';
   let html = '';
-  files.forEach(f => {
+  files.forEach((f, i) => {
     const thumb = f.thumbnail || f.url;
     html += `
-      <a class="gallery-item" href="${f.url}" target="_blank" rel="noopener">
+      <button class="gallery-item" data-index="${i}" aria-label="Ver foto ${i + 1}">
         <img src="${thumb}" alt="${f.name}" loading="lazy" onerror="this.style.opacity='0.3'">
-      </a>
+      </button>
     `;
   });
   grid.innerHTML = html;
+
+  grid.querySelectorAll('.gallery-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const idx = parseInt(item.getAttribute('data-index'), 10);
+      openLightbox(idx);
+    });
+  });
 }
 
 function updateDetailProgress(count, target) {
@@ -266,3 +276,88 @@ function showCelebration() {
   `;
   header.appendChild(div);
 }
+
+function openLightbox(index) {
+  if (!currentGalleryFiles || currentGalleryFiles.length === 0) return;
+  lightboxIndex = index;
+  const lightbox = document.getElementById('lightbox');
+  const img = document.getElementById('lightboxImage');
+  const counter = document.getElementById('lightboxCounter');
+
+  updateLightboxImage();
+  lightbox.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+  const lightbox = document.getElementById('lightbox');
+  lightbox.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function updateLightboxImage() {
+  const img = document.getElementById('lightboxImage');
+  const counter = document.getElementById('lightboxCounter');
+  const file = currentGalleryFiles[lightboxIndex];
+  const fullUrl = file.url || file.thumbnail;
+  img.src = fullUrl;
+  img.alt = file.name || '';
+  counter.textContent = (lightboxIndex + 1) + ' / ' + currentGalleryFiles.length;
+}
+
+function lightboxNext() {
+  if (lightboxIndex < currentGalleryFiles.length - 1) {
+    lightboxIndex++;
+    updateLightboxImage();
+  }
+}
+
+function lightboxPrev() {
+  if (lightboxIndex > 0) {
+    lightboxIndex--;
+    updateLightboxImage();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const closeBtn = document.getElementById('lightboxClose');
+  const prevBtn = document.getElementById('lightboxPrev');
+  const nextBtn = document.getElementById('lightboxNext');
+  const lightbox = document.getElementById('lightbox');
+
+  if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
+  if (prevBtn) prevBtn.addEventListener('click', lightboxPrev);
+  if (nextBtn) nextBtn.addEventListener('click', lightboxNext);
+
+  if (lightbox) {
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    const lb = document.getElementById('lightbox');
+    if (!lb || !lb.classList.contains('active')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') lightboxPrev();
+    if (e.key === 'ArrowRight') lightboxNext();
+  });
+
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  if (lightbox) {
+    lightbox.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    lightbox.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      const diff = touchStartX - touchEndX;
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) lightboxNext();
+        else lightboxPrev();
+      }
+    }, { passive: true });
+  }
+});
