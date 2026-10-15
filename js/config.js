@@ -1,4 +1,4 @@
-const APPS_SCRIPT_URL = 'COLOQUE_AQUI_O_URL_DO_SEU_APPS_SCRIPT';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAwmWKzns_yfVwj9cn7xCGPvv8PVeT_GDtOO0TrNWpXNpgvaadGB50QbBrJeP9F5M6Vw/exec';
 
 const CHALLENGES = [
   {
