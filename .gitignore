@@ -2,3 +2,56 @@
 WhatsApp Image *.jpeg
 *.log
 node_modules/
+
+# Logs
+logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage
+*.lcov
+.nyc_output
+
+# Dependency directories
+node_modules/
+jspm_packages/
+web_modules/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# dotenv environment variable files
+.env
+.env.*
+!.env.example
+
+# Build output
+dist
+build/Release
+.next
+.nuxt
+.output
+
+# Cache directories
+.cache
+.parcel-cache
+.turbo
+.astro/
+.vite/
