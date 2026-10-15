@@ -2,7 +2,7 @@ const https = require('https');
 const { URL } = require('url');
 
 const APPS_SCRIPT_URL =
-  'https://script.google.com/macros/s/AKfycbwAwmWKzns_yfVwj9cn7xCGPvv8PVeT_GDtOO0TrNWpXNpgvaadGB50QbBrJeP9F5M6Vw/exec';
+  'https://script.google.com/macros/s/AKfycbzmT3j44JWPjfFJJ7o0rFHQ2gpqc2p3dbuT0TFfN1wHmYxAoizTiD1ftESIIF7YbozinQ/exec';
 
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
