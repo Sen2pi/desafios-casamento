@@ -16,8 +16,10 @@ function doGet(e) {
     } else if (action === 'gallery') {
       var challengeId = e.parameter.challengeId;
       result = getGallery(challengeId);
+    } else if (action === 'setup') {
+      result = setupFolders();
     } else {
-      result = { error: 'Acao desconhecida. Use ?action=progress ou ?action=gallery&challengeId=ID' };
+      result = { error: 'Acoes disponiveis: progress, gallery, setup' };
     }
   } catch (err) {
     result = { error: err.toString() };
@@ -40,14 +42,7 @@ function doPost(e) {
       return jsonResponse({ success: false, error: 'Desafio invalido: ' + challengeId });
     }
 
-    var parent = DriveApp.getFolderById(PARENT_FOLDER_ID);
-    var folders = parent.getFoldersByName(challengeId);
-    var folder;
-    if (folders.hasNext()) {
-      folder = folders.next();
-    } else {
-      folder = parent.createFolder(challengeId);
-    }
+    var folder = getOrCreateFolder(challengeId);
 
     var base64 = imageData;
     if (base64.indexOf(',') !== -1) {
@@ -65,6 +60,7 @@ function doPost(e) {
     return jsonResponse({
       success: true,
       count: count,
+      folderUrl: folder.getUrl(),
       file: {
         id: file.getId(),
         name: file.getName(),
@@ -76,20 +72,38 @@ function doPost(e) {
   }
 }
 
-function getProgress() {
+function getOrCreateFolder(challengeId) {
   var parent = DriveApp.getFolderById(PARENT_FOLDER_ID);
-  var result = {};
+  var folders = parent.getFoldersByName(challengeId);
+  var folder;
+  if (folders.hasNext()) {
+    folder = folders.next();
+  } else {
+    folder = parent.createFolder(challengeId);
+  }
+  try {
+    folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (e) {}
+  return folder;
+}
 
+function setupFolders() {
+  var created = [];
   for (var i = 0; i < CHALLENGE_IDS.length; i++) {
     var id = CHALLENGE_IDS[i];
-    var folders = parent.getFoldersByName(id);
-    var count = 0;
-    if (folders.hasNext()) {
-      count = countFiles(folders.next());
-    }
-    result[id] = count;
+    var folder = getOrCreateFolder(id);
+    created.push({ id: id, url: folder.getUrl() });
   }
+  return { success: true, folders: created };
+}
 
+function getProgress() {
+  var result = {};
+  for (var i = 0; i < CHALLENGE_IDS.length; i++) {
+    var id = CHALLENGE_IDS[i];
+    var folder = getOrCreateFolder(id);
+    result[id] = countFiles(folder);
+  }
   return result;
 }
 
@@ -98,13 +112,7 @@ function getGallery(challengeId) {
     return { error: 'Desafio invalido' };
   }
 
-  var parent = DriveApp.getFolderById(PARENT_FOLDER_ID);
-  var folders = parent.getFoldersByName(challengeId);
-  if (!folders.hasNext()) {
-    return { challengeId: challengeId, files: [] };
-  }
-
-  var folder = folders.next();
+  var folder = getOrCreateFolder(challengeId);
   var files = folder.getFiles();
   var list = [];
 
@@ -127,7 +135,7 @@ function getGallery(challengeId) {
     return new Date(b.date) - new Date(a.date);
   });
 
-  return { challengeId: challengeId, files: list };
+  return { challengeId: challengeId, folderUrl: folder.getUrl(), files: list };
 }
 
 function countFiles(folder) {
