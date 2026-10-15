@@ -138,7 +138,7 @@ function renderGallery(files) {
   section.style.display = 'block';
   let html = '';
   files.forEach((f, i) => {
-    const thumb = f.thumbnail || f.url;
+    const thumb = getDriveImageUrl(f, 400);
     html += `
       <button class="gallery-item" data-index="${i}" aria-label="Ver foto ${i + 1}">
         <img src="${thumb}" alt="${f.name}" loading="lazy" onerror="this.style.opacity='0.3'">
@@ -295,11 +295,18 @@ function closeLightbox() {
   document.body.style.overflow = '';
 }
 
+function getDriveImageUrl(file, size) {
+  if (file.id) {
+    return 'https://lh3.googleusercontent.com/d/' + file.id + '=w' + size;
+  }
+  return file.thumbnail || file.url;
+}
+
 function updateLightboxImage() {
   const img = document.getElementById('lightboxImage');
   const counter = document.getElementById('lightboxCounter');
   const file = currentGalleryFiles[lightboxIndex];
-  const fullUrl = file.url || file.thumbnail;
+  const fullUrl = getDriveImageUrl(file, 1200);
   img.src = fullUrl;
   img.alt = file.name || '';
   counter.textContent = (lightboxIndex + 1) + ' / ' + currentGalleryFiles.length;
